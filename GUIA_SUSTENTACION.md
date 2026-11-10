@@ -23,23 +23,21 @@
 
 ## Comandos rápidos
 
-Backend (terminal 1):
+En local (desde la carpeta del proyecto):
 
 ```bash
-cd papel-y-luna-mvp3/backend
-source .venv/bin/activate
-python manage.py runserver 8000
-```
-
-Frontend (terminal 2):
-
-```bash
-cd papel-y-luna-mvp3/frontend
-pnpm dev
+bash iniciar.sh
 ```
 
 URL local del frontend: `http://localhost:5173`  
 URL local de la API: `http://localhost:8000/api/`
+
+En Internet:
+
+- Frontend: https://papel-y-luna-web.onrender.com
+- Backend/API: https://papel-y-luna-api.onrender.com/api/
+
+Abre la URL pública unos minutos antes de presentar: el plan gratuito tarda hasta un minuto en despertar.
 
 ## Preguntas posibles
 
@@ -47,4 +45,5 @@ URL local de la API: `http://localhost:8000/api/`
 - **¿Qué sucede al corregir?** Compara cantidades anteriores y nuevas y aplica únicamente la diferencia al stock.
 - **¿Cómo se calcula el reembolso con descuento?** Se calcula la parte correspondiente al precio de las unidades reembolsadas usando la proporción entre total pagado y subtotal.
 - **¿Por qué mantener el detalle en tablas?** Permite consultar integridad relacional y evita depender de columnas con JSON serializado.
-- **¿Qué falta para compartirlo públicamente?** Conectar una cuenta de hosting, configurar PostgreSQL y variables de entorno, desplegar ambos servicios y copiar las URLs reales al README. La ejecución local sí está lista.
+- **¿Dónde está desplegado?** Frontend estático y API Django en Render, con base PostgreSQL gestionada. El frontend reenvía `/api` al backend para que la cookie de sesión sea del mismo sitio.
+- **¿Por qué ya no Google Sheets?** El MVP 3 exige backend propio con base de datos real; las líneas de venta y compra están en tablas de detalle con llaves foráneas.

@@ -2,15 +2,33 @@
 
 Aplicación full-stack para operar el punto de venta de la papelería Papel y Luna. El frontend React/Vite consume una API REST en Django. La información se almacena en SQLite para desarrollo local y puede conectarse a PostgreSQL mediante `DATABASE_URL`.
 
+## Aplicación publicada
+
+- **Frontend:** https://papel-y-luna-web.onrender.com
+- **Backend/API:** https://papel-y-luna-api.onrender.com/api/
+- **Repositorio:** https://github.com/danielprada325-afk/papel-y-luna-pos
+
+El plan gratuito de Render suspende el servidor tras 15 minutos sin uso: la primera carga puede tardar hasta un minuto.
+
 ## Requisitos
 
 - Python 3.10 o posterior
 - Node.js 20 o posterior
-- pnpm (o npm, ajustando los comandos)
+- npm (incluido con Node.js)
 
-## Ejecutar en local
+## Ejecutar en local (un solo comando)
 
-Abre dos terminales desde la carpeta `papel-y-luna-mvp3`.
+Desde la carpeta del proyecto:
+
+```bash
+bash iniciar.sh
+```
+
+El script crea el entorno de Python, instala dependencias, crea la base SQLite con los usuarios, inicia la API en `http://localhost:8000/api/` y el frontend en `http://localhost:5173`. Para detenerlo, pulsa `Ctrl+C`.
+
+## Ejecutar en local (paso a paso)
+
+Abre dos terminales desde la carpeta del proyecto.
 
 **Terminal 1 — backend:**
 
@@ -31,9 +49,9 @@ La API queda disponible en `http://localhost:8000/api/`.
 
 ```bash
 cd frontend
-pnpm install
+npm install
 cp .env.example .env.local
-pnpm dev
+npm run dev
 ```
 
 Abre `http://localhost:5173`. El frontend inicia sesión contra el backend y solicita los datos mediante HTTP. No utiliza Google Sheets.
@@ -85,7 +103,7 @@ Todas las rutas de negocio requieren iniciar sesión. La sesión se mantiene con
 
 ## Despliegue
 
-**URLs públicas** (completar después de desplegar):
+**URLs públicas:**
 
 - Frontend: `https://papel-y-luna-web.onrender.com`
 - Backend/API: `https://papel-y-luna-api.onrender.com/api/`
@@ -107,7 +125,6 @@ Notas del plan gratuito: el backend se suspende tras 15 minutos sin uso y la pri
 
 El proyecto ya está preparado para base PostgreSQL mediante `DATABASE_URL`, y el frontend acepta la URL desplegada del API con `VITE_API_URL`. Para publicar, crea una base PostgreSQL, despliega el backend como servicio Python ejecutando `pip install -r requirements.txt` y como comando de inicio `python manage.py migrate && python manage.py seed_pos && gunicorn pos.wsgi:application --bind 0.0.0.0:$PORT`. Despliega `frontend/` como sitio estático usando `pnpm install --frozen-lockfile` y `pnpm build`; publica `dist/` y configura `VITE_API_URL` con la URL HTTPS del backend más `/api`. En backend configura `DEBUG=false`, una clave secreta nueva, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` con el dominio HTTPS del frontend, `DATABASE_URL` y contraseñas iniciales propias.
 
-Las URLs públicas aún no están creadas: se generan al conectar estas carpetas a cuentas de despliegue. No inventes ni entregues URLs hasta comprobar el despliegue. Después de publicar, anota aquí `Frontend:` y `Backend/API:`.
 
 ## Presentación
 

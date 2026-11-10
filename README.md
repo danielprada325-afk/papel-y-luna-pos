@@ -87,7 +87,7 @@ Todas las rutas de negocio requieren iniciar sesión. La sesión se mantiene con
 
 **URLs públicas** (completar después de desplegar):
 
-- Frontend: `https://papel-y-luna.onrender.com`
+- Frontend: `https://papel-y-luna-web.onrender.com`
 - Backend/API: `https://papel-y-luna-api.onrender.com/api/`
 
 ### Opción recomendada: Render Blueprint (`render.yaml`)
@@ -96,7 +96,7 @@ El archivo `render.yaml` crea en una sola cuenta gratuita de Render la base de d
 
 1. Sube esta carpeta al repositorio de GitHub del equipo.
 2. En [render.com](https://render.com), inicia sesión con GitHub y elige **New → Blueprint**.
-3. Selecciona el repositorio y pulsa **Apply**. Render crea `papel-y-luna-db`, `papel-y-luna-api` y `papel-y-luna`.
+3. Selecciona el repositorio y pulsa **Apply**. Render crea `papel-y-luna-db`, `papel-y-luna-api` y `papel-y-luna-web`.
 4. Cuando los tres estén en verde, abre la URL del frontend e inicia sesión con `admin` / `Admin123!`.
 
 El frontend llama a `/api` en su propio dominio y Render reenvía esas peticiones al backend (regla `rewrite` en `render.yaml`). Así la cookie de sesión funciona en cualquier navegador. Si Render asigna al backend un nombre distinto de `papel-y-luna-api.onrender.com`, actualiza el `destination` de esa regla.

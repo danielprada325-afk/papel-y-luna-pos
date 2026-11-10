@@ -3,8 +3,8 @@
 databases:
   - name: papel-y-luna-db
     plan: free
-    databaseName: papel_y_luna
-    user: papel_y_luna
+    databaseName: papelyluna
+    user: papelyluna
 
 services:
   - type: web
@@ -29,14 +29,14 @@ services:
       - key: ALLOWED_HOSTS
         value: .onrender.com
       - key: CORS_ALLOWED_ORIGINS
-        value: https://papel-y-luna.onrender.com
+        value: https://papel-y-luna-web.onrender.com
       - key: ADMIN_PASSWORD
         value: Admin123!
       - key: CASHIER_PASSWORD
         value: Cajero123!
 
   - type: web
-    name: papel-y-luna
+    name: papel-y-luna-web
     runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
@@ -46,6 +46,8 @@ services:
       # Así la cookie de sesión es del mismo sitio y el login funciona en todos los navegadores.
       - key: VITE_API_URL
         value: /api
+      - key: NODE_VERSION
+        value: 22.12.0
     routes:
       - type: rewrite
         source: /api/*

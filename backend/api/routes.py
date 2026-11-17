@@ -51,6 +51,7 @@ def dispatch(request, resource="", record_id=""):
                 if action == "correct": sale=c.sale_correct(request,sale,data)
                 elif action == "refund":
                     refund=c.refund_create(request,sale,data); return response({"id":refund.id,"monto":float(refund.amount)})
+                elif action == "send_invoice": sale=c.send_invoice(sale)
                 else: sale=c.sale_update(request,sale,data)
                 return response(c.sale_json(sale))
         if resource == "purchases" and request.method == "POST":
@@ -85,6 +86,7 @@ def dispatch(request, resource="", record_id=""):
                 elif resource == "clients": obj.name=data.get("nombre",data.get("name",obj.name or "")); obj.phone=data.get("telefono",data.get("phone",obj.phone or "")); obj.email=data.get("correo",data.get("email",obj.email or ""))
                 elif resource == "providers": obj.name=data.get("nombre",data.get("name",obj.name or "")); obj.phone=data.get("telefono",data.get("phone",obj.phone or "")); obj.email=data.get("correo",data.get("email",obj.email or "")); obj.tax_id=data.get("nit",obj.tax_id or "")
                 else: obj.name=data.get("nombre",data.get("name",obj.name or "")); obj.kind=data.get("tipo",obj.kind or "porcentaje"); obj.value=Decimal(str(data.get("valor",obj.value or 0))); obj.active=data.get("activo",True)
+                if resource in ("clients","providers"): c.validate_contact(obj, resource=="providers")
                 obj.save(); return response({"id":obj.id,"nombre":obj.name,"name":obj.name,"tipo":getattr(obj,"kind",""),"valor":float(getattr(obj,"value",0) or 0)},201 if not record_id else 200)
             if request.method == "DELETE": lookup(model,record_id).delete(); return response({"ok":True})
         return error("Ruta o método no encontrado",404)

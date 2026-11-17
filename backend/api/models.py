@@ -50,6 +50,8 @@ class Sale(models.Model):
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     received = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     change = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # Pago mixto: parte por transferencia (Nequi u otra); el resto se paga en efectivo
+    transfer_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     discount = models.ForeignKey(Discount, on_delete=models.SET_NULL, null=True, blank=True)
     corrected_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="corrected_sales")
     corrected_at = models.DateTimeField(null=True, blank=True)
@@ -63,6 +65,8 @@ class Sale(models.Model):
     e_invoice_doc = models.CharField(max_length=40, blank=True)
     e_invoice_name = models.CharField(max_length=150, blank=True)
     e_invoice_email = models.EmailField(blank=True)
+    e_invoice_sent_at = models.DateTimeField(null=True, blank=True)
+    e_invoice_status = models.CharField(max_length=255, blank=True)
 
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="items")

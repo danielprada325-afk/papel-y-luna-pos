@@ -69,7 +69,14 @@ Abre `http://localhost:5173`. El frontend inicia sesión contra el backend y sol
 
 - Venta, pago en efectivo/Nequi/Debe, cambio, descuento por venta, factura imprimible y PDF del navegador.
 - IVA opcional (19%) por venta, calculado después del descuento y visible en la factura.
-- Solicitud de factura electrónica: NIT o cédula, nombre o razón social y correo se guardan con la venta y salen en la factura (no se transmite a la DIAN).
+- Solicitud de factura electrónica: NIT o cédula, nombre o razón social y correo se guardan con la venta, salen en la factura y la factura se envía al correo del cliente (no se transmite a la DIAN).
+- Precio editable por producto dentro de la venta (no cambia el precio del catálogo).
+- Pago mixto: una parte por transferencia/Nequi y otra en efectivo, con cambio sobre la parte en efectivo; queda registrado en la venta, la factura y los reportes.
+- Clientes y proveedores con teléfono colombiano de 10 dígitos y correo validado (debe tener @ y dominio); los proveedores exigen NIT y teléfono.
+- Stock disponible visible en cada producto de la venta y siempre editable en el formulario de producto.
+- Reembolso en ventana propia: total o parcial con botones − / +, retorno al inventario por producto y monto en vivo.
+- Reportes con periodos rápidos (hoy, ayer, 7 y 30 días, este mes, mes anterior): total vendido, ventas netas, descuentos, IVA, reembolsos, pérdidas, costo, ganancia, compras y ventas por medio de pago.
+- Búsqueda de productos por nombre o código.
 - Ventas abiertas que se guardan y se pueden retomar.
 - Inventario organizado: resumen de unidades y valor (costo × stock), stock mínimo por producto, alertas de stock bajo y agotados, filtros por estado y búsqueda.
 - CRUD administrativo de productos/categorías; edición rápida de productos desde la venta.
@@ -80,6 +87,21 @@ Abre `http://localhost:5173`. El frontend inicia sesión contra el backend y sol
 - Registro, filtro básico, resolución y agrupación normalizada de faltantes.
 - Reportes por fecha de ventas, productos más vendidos, compras y faltantes frecuentes.
 - Acceso por roles de administrador y cajero.
+
+## Envío de la factura por correo
+
+Cuando una venta marca **Factura electrónica**, el servidor envía la factura al correo del cliente justo después de cobrar, y la factura en pantalla muestra si se envió ("✓ Enviada") o por qué no ("⚠ No enviada: …"), con un botón para reenviarla. El correo es una copia de la factura de venta: **no se transmite a la DIAN**.
+
+Para que el envío funcione, el backend necesita un servicio de correo. Se recomienda **Brevo** (gratis, 300 correos al día, funciona en el plan gratuito de Render):
+
+1. Crea una cuenta en https://www.brevo.com y verifica el correo remitente (Senders → Add a sender).
+2. En Brevo, ve a **SMTP & API → API Keys** y genera una clave.
+3. En Render, abre `papel-y-luna-api` → **Environment** y agrega:
+   - `BREVO_API_KEY` = la clave generada
+   - `EMAIL_FROM` = el correo remitente verificado en Brevo
+4. Guarda los cambios (Render reinicia el servicio) y usa **Enviar factura al correo** en una venta para probar.
+
+Alternativa SMTP (por ejemplo Gmail con contraseña de aplicación, útil en local): `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` y `EMAIL_FROM`. El plan gratuito de Render puede bloquear los puertos SMTP; por eso en producción se usa la API de Brevo.
 
 ## Datos y arquitectura
 

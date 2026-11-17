@@ -7,7 +7,30 @@ from django.views.decorators.csrf import csrf_exempt
 from . import controllers as c
 from .models import Category, Client, Discount, Product, Provider, Purchase, Sale, Shortage
 
-def response(data, status=200): return JsonResponse(data, safe=False, status=status)
+def response(data, status=200): return JsonResponse(data, safe=False, status=status, json_dumps_params={"ensure_ascii": False})
+def api_info(request):
+    """Presentación pública de la API (no expone datos de negocio)."""
+    from django.db import connection
+    try:
+        with connection.cursor() as cur: cur.execute("SELECT 1")
+        db = "conectada"
+    except Exception: db = "sin conexión"
+    return response({
+        "api": "Papel y Luna POS — API REST", "estado": "en línea", "baseDeDatos": db,
+        "motor": connection.vendor, "autenticacion": "Inicia sesión con POST /api/auth/login/ para usar las rutas de negocio",
+        "sesionActiva": request.user.is_authenticated,
+        "rutas": {
+            "POST /api/auth/login/": "Iniciar sesión", "GET /api/auth/me/": "Usuario actual", "POST /api/auth/logout/": "Cerrar sesión",
+            "GET /api/dashboard/": "Carga inicial de todos los módulos",
+            "GET|POST|PATCH|DELETE /api/products/": "Productos", "GET|POST|PATCH|DELETE /api/categories/": "Categorías",
+            "GET|POST|PATCH|DELETE /api/clients/": "Clientes", "GET|POST|PATCH|DELETE /api/providers/": "Proveedores",
+            "GET|POST|PATCH|DELETE /api/discounts/": "Descuentos",
+            "GET|POST|PATCH /api/sales/": "Ventas (abiertas, cerradas, corrección, reembolso, envío de factura)",
+            "POST /api/purchases/": "Compras", "GET|POST|PATCH /api/shortages/": "Faltantes",
+            "GET /api/reports/?desde=AAAA-MM-DD&hasta=AAAA-MM-DD": "Reportes (administrador)",
+        },
+        "frontend": "https://papel-y-luna-web.onrender.com",
+    })
 def error(message, status=400): return response({"error": str(message)}, status)
 def lookup(model, rid): return model.objects.get(pk=rid)
 def require_admin(request): return request.user.is_staff
@@ -25,6 +48,7 @@ def dispatch(request, resource="", record_id=""):
     if request.path.endswith("/auth/logout/"):
         if request.user.is_authenticated: c.logout_action(request)
         return response({"ok":True})
+    if resource in ("", "health") and request.method == "GET" and (resource == "health" or not request.user.is_authenticated): return api_info(request)
     if not request.user.is_authenticated: return error("Inicia sesión",401)
     if resource in ("", "dashboard") and request.method == "GET": return response(c.snapshot())
     if resource == "reports" and request.method == "GET":

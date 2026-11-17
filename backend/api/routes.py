@@ -78,8 +78,8 @@ def dispatch(request, resource="", record_id=""):
             if request.method in ("POST","PUT","PATCH"):
                 obj=lookup(model,record_id) if record_id else model()
                 if resource == "products":
-                    obj.code=data.get("codigo",data.get("code",obj.code or "")); obj.name=data.get("nombre",data.get("name",obj.name or "")); obj.category_id=data.get("categoriaId",data.get("categoryId",obj.category_id)); obj.price=Decimal(str(data.get("precio",data.get("price",obj.price or 0)))); obj.cost=Decimal(str(data.get("costo",data.get("cost",obj.cost or 0)))); obj.track_inventory=data.get("seguimientoInventario",data.get("trackInventory",True)); obj.stock=int(data.get("stock",obj.stock or 0))
-                    if obj.price < 0 or obj.cost < 0 or obj.stock < 0: return error("Precio, costo y stock deben ser positivos")
+                    obj.code=data.get("codigo",data.get("code",obj.code or "")); obj.name=data.get("nombre",data.get("name",obj.name or "")); obj.category_id=data.get("categoriaId",data.get("categoryId",obj.category_id)); obj.price=Decimal(str(data.get("precio",data.get("price",obj.price or 0)))); obj.cost=Decimal(str(data.get("costo",data.get("cost",obj.cost or 0)))); obj.track_inventory=data.get("seguimientoInventario",data.get("trackInventory",True)); obj.stock=int(data.get("stock",obj.stock or 0)); obj.min_stock=int(data.get("stockMinimo",obj.min_stock if obj.min_stock is not None else 5))
+                    if obj.price < 0 or obj.cost < 0 or obj.stock < 0 or obj.min_stock < 0: return error("Precio, costo y stock deben ser positivos")
                     obj.save(); return response(c.product_json(obj),201 if not record_id else 200)
                 if resource == "categories": obj.name=data.get("nombre",data.get("name",obj.name or ""))
                 elif resource == "clients": obj.name=data.get("nombre",data.get("name",obj.name or "")); obj.phone=data.get("telefono",data.get("phone",obj.phone or "")); obj.email=data.get("correo",data.get("email",obj.email or ""))

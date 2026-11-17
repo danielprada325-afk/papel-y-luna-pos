@@ -1,5 +1,5 @@
 import re, unicodedata
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
 from django.db.models import Count, Sum
@@ -19,9 +19,9 @@ def login_action(request, data):
 def current_user(request): return {"user": user_data(request.user)}
 def logout_action(request): logout(request); return {"ok": True}
 
-def product_json(p): return {"id": p.id, "codigo": p.code, "nombre": p.name, "categoriaId": p.category_id, "categoria": p.category.name, "precio": float(p.price), "costo": float(p.cost), "seguimientoInventario": p.track_inventory, "stock": p.stock}
+def product_json(p): return {"id": p.id, "codigo": p.code, "nombre": p.name, "categoriaId": p.category_id, "categoria": p.category.name, "precio": float(p.price), "costo": float(p.cost), "seguimientoInventario": p.track_inventory, "stock": p.stock, "stockMinimo": p.min_stock}
 def sale_json(s):
-    return {"id": s.id, "fecha": s.date.isoformat(), "estado": s.status, "clienteId": s.client_id, "cliente": s.client.name if s.client else "", "metodoPago": s.payment_method, "subtotal": float(s.subtotal), "descuento": float(s.discount_amount), "descuentoId": s.discount_id, "total": float(s.total), "valorRecibido": float(s.received) if s.received is not None else None, "cambio": float(s.change), "corregida": bool(s.corrected_at), "corregidaPor": s.corrected_by.username if s.corrected_by else "", "corregidaEn": s.corrected_at.isoformat() if s.corrected_at else None, "reembolsoEstado": s.refund_status, "items": [{"id": i.id, "productoId": i.product_id, "codigo": i.product.code, "nombre": i.product.name, "cantidad": i.quantity, "precio": float(i.unit_price)} for i in s.items.select_related("product").all()]}
+    return {"id": s.id, "fecha": s.date.isoformat(), "estado": s.status, "clienteId": s.client_id, "cliente": s.client.name if s.client else "", "metodoPago": s.payment_method, "subtotal": float(s.subtotal), "descuento": float(s.discount_amount), "descuentoId": s.discount_id, "total": float(s.total), "valorRecibido": float(s.received) if s.received is not None else None, "cambio": float(s.change), "corregida": bool(s.corrected_at), "corregidaPor": s.corrected_by.username if s.corrected_by else "", "corregidaEn": s.corrected_at.isoformat() if s.corrected_at else None, "reembolsoEstado": s.refund_status, "cobrarIva": s.tax_applied, "ivaPorcentaje": float(s.tax_rate), "iva": float(s.tax_amount), "facturaElectronica": s.e_invoice, "feDocumento": s.e_invoice_doc, "feNombre": s.e_invoice_name, "feCorreo": s.e_invoice_email, "items": [{"id": i.id, "productoId": i.product_id, "codigo": i.product.code, "nombre": i.product.name, "cantidad": i.quantity, "precio": float(i.unit_price)} for i in s.items.select_related("product").all()]}
 def snapshot():
     return {"productos": [product_json(x) for x in Product.objects.select_related("category").order_by("name")], "categorias": [{"id": x.id, "nombre": x.name, "name": x.name} for x in Category.objects.order_by("name")], "clientes": [{"id": x.id, "nombre": x.name, "name": x.name, "telefono": x.phone, "correo": x.email} for x in Client.objects.order_by("name")], "proveedores": [{"id": x.id, "nombre": x.name, "name": x.name, "telefono": x.phone, "correo": x.email} for x in Provider.objects.order_by("name")], "ventas": [sale_json(x) for x in Sale.objects.select_related("client", "discount", "corrected_by").prefetch_related("items__product").order_by("-date")], "compras": [{"id": x.id, "fecha": x.date.isoformat(), "proveedorId": x.provider_id, "proveedor": x.provider.name, "metodoPago": x.payment_method, "total": float(x.total), "items": [{"productoId": i.product_id, "nombre": i.product.name, "cantidad": i.quantity, "costo": float(i.unit_cost)} for i in x.items.select_related("product").all()]} for x in Purchase.objects.select_related("provider").prefetch_related("items__product").order_by("-date")], "descuentos": [{"id": x.id, "nombre": x.name, "tipo": x.kind, "valor": float(x.value), "activo": x.active} for x in Discount.objects.order_by("name")], "faltantes": [{"id": x.id, "nombre": x.name, "productoId": x.product_id, "cantidad": x.quantity, "tipo": x.kind, "proveedorId": x.provider_id, "proveedor": x.provider.name if x.provider else "", "estado": x.status, "nota": x.note, "fecha": x.created_at.isoformat()} for x in Shortage.objects.select_related("product", "provider").order_by("-created_at")]}
 def money(value, label):
@@ -39,10 +39,32 @@ def get_lines(data):
         seen.add(p.id); lines.append((p, q))
     if not lines: raise ValueError("Agrega al menos un producto")
     return lines
-def calc(lines, discount=None):
+CENT = Decimal("0.01")
+TAX_RATE = Decimal("19")
+def calc(lines, discount=None, tax=False):
+    """Devuelve subtotal, descuento, IVA y total. El IVA (19%) se calcula sobre el valor después del descuento."""
     sub = sum((p.price * q for p, q in lines), Decimal(0)); off = Decimal(0)
     if discount: off = min(sub, sub * discount.value / 100 if discount.kind == Discount.PERCENT else discount.value)
-    return sub, off, sub - off
+    off = off.quantize(CENT, ROUND_HALF_UP); base = sub - off
+    iva = (base * TAX_RATE / 100).quantize(CENT, ROUND_HALF_UP) if tax else Decimal(0)
+    return sub, off, iva, base + iva
+def as_bool(value): return value is True or str(value).lower() in ("true", "1", "si", "sí", "on")
+def apply_extras(sale, data):
+    """IVA opcional y datos para factura electrónica. Si el dato no viene, se conserva el valor actual."""
+    if "cobrarIva" in data: sale.tax_applied = as_bool(data.get("cobrarIva"))
+    sale.tax_rate = TAX_RATE
+    if "facturaElectronica" in data:
+        sale.e_invoice = as_bool(data.get("facturaElectronica"))
+        if sale.e_invoice:
+            sale.e_invoice_doc = str(data.get("feDocumento", "")).strip()[:40]
+            sale.e_invoice_name = str(data.get("feNombre", "")).strip()[:150]
+            sale.e_invoice_email = str(data.get("feCorreo", "")).strip()[:254]
+        else: sale.e_invoice_doc = sale.e_invoice_name = sale.e_invoice_email = ""
+def validate_e_invoice(sale):
+    if not sale.e_invoice: return
+    if not sale.e_invoice_doc or not sale.e_invoice_name: raise ValueError("Factura electrónica: escribe el NIT o cédula y el nombre o razón social")
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", sale.e_invoice_email or ""): raise ValueError("Factura electrónica: escribe un correo válido")
+def set_totals(sale, lines, discount=None): sale.subtotal, sale.discount_amount, sale.tax_amount, sale.total = calc(lines, discount, sale.tax_applied)
 def persist_lines(sale, lines):
     sale.items.all().delete()
     SaleItem.objects.bulk_create([SaleItem(sale=sale, product=p, quantity=q, unit_price=p.price) for p, q in lines])
@@ -66,8 +88,10 @@ def close_sale(sale, data, request, correcting=False):
     method = data.get("metodoPago", data.get("paymentMethod", sale.payment_method or "Efectivo"))
     if method == "Debe" and not client: raise ValueError("Selecciona un cliente para una venta a crédito")
     sale.client, sale.payment_method, sale.discount = client, method, discount
-    sale.subtotal, sale.discount_amount, sale.total = calc(lines, discount)
-    received = data.get("valorRecibido", data.get("received", sale.total))
+    apply_extras(sale, data); validate_e_invoice(sale)
+    set_totals(sale, lines, discount)
+    received = data.get("valorRecibido", data.get("received"))
+    if received in (None, ""): received = sale.total
     sale.received = money(received, "Valor recibido") if method == "Efectivo" else None
     if method == "Efectivo" and sale.received < sale.total: raise ValueError("El valor recibido es menor al total")
     sale.change = sale.received - sale.total if method == "Efectivo" else Decimal(0)
@@ -85,13 +109,13 @@ def sale_create(request, data):
     sale = Sale(status=Sale.OPEN)
     if data.get("estado", data.get("status", "cerrada")) == "abierta":
         lines = get_lines(data); sale.client_id = data.get("clienteId") or None
-        sale.subtotal, sale.discount_amount, sale.total = calc(lines); sale.save(); persist_lines(sale, lines); return sale
+        apply_extras(sale, data); set_totals(sale, lines); sale.save(); persist_lines(sale, lines); return sale
     return close_sale(sale, data, request)
 @transaction.atomic
 def sale_update(request, sale, data):
     if sale.status == Sale.CLOSED: raise ValueError("La venta cerrada requiere acción de corrección")
     lines = get_lines(data); sale.client_id = data.get("clienteId") or None
-    sale.subtotal, sale.discount_amount, sale.total = calc(lines); sale.save(); persist_lines(sale, lines)
+    apply_extras(sale, data); set_totals(sale, lines); sale.save(); persist_lines(sale, lines)
     if data.get("estado", data.get("status")) == "cerrada": return close_sale(sale, data, request)
     return sale
 @transaction.atomic

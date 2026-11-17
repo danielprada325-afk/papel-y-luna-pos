@@ -68,8 +68,11 @@ Abre `http://localhost:5173`. El frontend inicia sesión contra el backend y sol
 ## Qué incluye
 
 - Venta, pago en efectivo/Nequi/Debe, cambio, descuento por venta, factura imprimible y PDF del navegador.
+- IVA opcional (19%) por venta, calculado después del descuento y visible en la factura.
+- Solicitud de factura electrónica: NIT o cédula, nombre o razón social y correo se guardan con la venta y salen en la factura (no se transmite a la DIAN).
 - Ventas abiertas que se guardan y se pueden retomar.
-- Inventario y CRUD administrativo de productos/categorías; edición rápida de productos desde la venta.
+- Inventario organizado: resumen de unidades y valor (costo × stock), stock mínimo por producto, alertas de stock bajo y agotados, filtros por estado y búsqueda.
+- CRUD administrativo de productos/categorías; edición rápida de productos desde la venta.
 - Clientes y proveedores, compras y actualización de stock.
 - Corrección de ventas cerradas conservando el ID y registrando usuario y hora.
 - Reembolsos parciales/totales por producto con opción de retorno al inventario.

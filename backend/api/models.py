@@ -36,6 +36,7 @@ class Product(models.Model):
     cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     track_inventory = models.BooleanField(default=True)
     stock = models.PositiveIntegerField(default=0)
+    min_stock = models.PositiveIntegerField(default=5)
     def __str__(self): return self.name
 
 class Sale(models.Model):
@@ -53,6 +54,15 @@ class Sale(models.Model):
     corrected_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="corrected_sales")
     corrected_at = models.DateTimeField(null=True, blank=True)
     refund_status = models.CharField(max_length=12, blank=True)
+    # IVA opcional por venta (se calcula sobre el total después del descuento)
+    tax_applied = models.BooleanField(default=False)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=19)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # Datos para solicitar factura electrónica (no se envía a la DIAN)
+    e_invoice = models.BooleanField(default=False)
+    e_invoice_doc = models.CharField(max_length=40, blank=True)
+    e_invoice_name = models.CharField(max_length=150, blank=True)
+    e_invoice_email = models.EmailField(blank=True)
 
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="items")

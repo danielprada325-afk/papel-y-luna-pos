@@ -86,3 +86,85 @@ CREATE INDEX "api_refunditem_sale_item_id_8d4c14c6" ON "api_refunditem" ("sale_i
 --
 -- (no-op)
 COMMIT;
+
+-- Migración 0003: IVA opcional, datos de factura electrónica y stock mínimo
+BEGIN;
+--
+-- Add field min_stock to product
+--
+CREATE TABLE "new__api_product" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "min_stock" integer unsigned NOT NULL CHECK ("min_stock" >= 0), "code" varchar(40) NOT NULL UNIQUE, "name" varchar(150) NOT NULL, "price" decimal NOT NULL, "cost" decimal NOT NULL, "track_inventory" bool NOT NULL, "stock" integer unsigned NOT NULL CHECK ("stock" >= 0), "category_id" bigint NOT NULL REFERENCES "api_category" ("id") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__api_product" ("id", "code", "name", "price", "cost", "track_inventory", "stock", "category_id", "min_stock") SELECT "id", "code", "name", "price", "cost", "track_inventory", "stock", "category_id", 5 FROM "api_product";
+DROP TABLE "api_product";
+ALTER TABLE "new__api_product" RENAME TO "api_product";
+CREATE INDEX "api_product_category_id_a2b9d1e7" ON "api_product" ("category_id");
+--
+-- Add field e_invoice to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", 0 FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+--
+-- Add field e_invoice_doc to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL, "e_invoice_doc" varchar(40) NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", '' FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+--
+-- Add field e_invoice_email to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL, "e_invoice_doc" varchar(40) NOT NULL, "e_invoice_email" varchar(254) NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", '' FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+--
+-- Add field e_invoice_name to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL, "e_invoice_doc" varchar(40) NOT NULL, "e_invoice_email" varchar(254) NOT NULL, "e_invoice_name" varchar(150) NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", '' FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+--
+-- Add field tax_amount to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL, "e_invoice_doc" varchar(40) NOT NULL, "e_invoice_email" varchar(254) NOT NULL, "e_invoice_name" varchar(150) NOT NULL, "tax_amount" decimal NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name", "tax_amount") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name", '0' FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+--
+-- Add field tax_applied to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL, "e_invoice_doc" varchar(40) NOT NULL, "e_invoice_email" varchar(254) NOT NULL, "e_invoice_name" varchar(150) NOT NULL, "tax_amount" decimal NOT NULL, "tax_applied" bool NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name", "tax_amount", "tax_applied") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name", "tax_amount", 0 FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+--
+-- Add field tax_rate to sale
+--
+CREATE TABLE "new__api_sale" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "date" datetime NOT NULL, "status" varchar(12) NOT NULL, "payment_method" varchar(20) NOT NULL, "subtotal" decimal NOT NULL, "discount_amount" decimal NOT NULL, "total" decimal NOT NULL, "received" decimal NULL, "change" decimal NOT NULL, "corrected_at" datetime NULL, "refund_status" varchar(12) NOT NULL, "client_id" bigint NULL REFERENCES "api_client" ("id") DEFERRABLE INITIALLY DEFERRED, "corrected_by_id" integer NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "discount_id" bigint NULL REFERENCES "api_discount" ("id") DEFERRABLE INITIALLY DEFERRED, "e_invoice" bool NOT NULL, "e_invoice_doc" varchar(40) NOT NULL, "e_invoice_email" varchar(254) NOT NULL, "e_invoice_name" varchar(150) NOT NULL, "tax_amount" decimal NOT NULL, "tax_applied" bool NOT NULL, "tax_rate" decimal NOT NULL);
+INSERT INTO "new__api_sale" ("id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name", "tax_amount", "tax_applied", "tax_rate") SELECT "id", "date", "status", "payment_method", "subtotal", "discount_amount", "total", "received", "change", "corrected_at", "refund_status", "client_id", "corrected_by_id", "discount_id", "e_invoice", "e_invoice_doc", "e_invoice_email", "e_invoice_name", "tax_amount", "tax_applied", '19' FROM "api_sale";
+DROP TABLE "api_sale";
+ALTER TABLE "new__api_sale" RENAME TO "api_sale";
+CREATE INDEX "api_sale_client_id_04ca5649" ON "api_sale" ("client_id");
+CREATE INDEX "api_sale_corrected_by_id_46ae6a63" ON "api_sale" ("corrected_by_id");
+CREATE INDEX "api_sale_discount_id_123caeb6" ON "api_sale" ("discount_id");
+COMMIT;

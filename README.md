@@ -10,6 +10,19 @@ Aplicación full-stack para operar el punto de venta de la papelería Papel y Lu
 
 El plan gratuito de Render suspende el servidor tras 15 minutos sin uso: la primera carga puede tardar hasta un minuto.
 
+## Credenciales
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `Admin123!` |
+| Cajero | `cajero` | `Cajero123!` |
+
+## Scripts de base de datos
+
+- `backend/scripts/schema.sql`: creación de todas las tablas (migraciones 0001 a 0005).
+- `backend/scripts/seed.sql`: usuarios iniciales (administrador y cajero) y catálogo de demostración.
+- Alternativa equivalente con Django: `python manage.py migrate` y `python manage.py seed_pos` (lo hace automáticamente `iniciar.sh`).
+
 ## Requisitos
 
 - Python 3.10 o posterior
@@ -107,7 +120,7 @@ Alternativa SMTP (por ejemplo Gmail con contraseña de aplicación, útil en loc
 
 `frontend/src/main.jsx` presenta los módulos y llama a `fetch`. `backend/api/routes.py` recibe las rutas REST; `controllers.py` concentra los cálculos y reglas; `models.py` define las tablas relacionales y sus llaves foráneas. Ventas, compras, correcciones y reembolsos usan transacciones de Django para guardar juntos el movimiento y el inventario.
 
-La base local se crea en `backend/db.sqlite3` al ejecutar migraciones. Las migraciones reproducibles están en `backend/api/migrations/`; `backend/scripts/schema.sql` incluye el SQL de la migración inicial para el motor local. `python manage.py seed_pos` agrega las cuentas y catálogo de demostración. Para PostgreSQL, configura `DATABASE_URL` y ejecuta los mismos comandos de migración y semilla.
+La base local se crea en `backend/db.sqlite3` al ejecutar migraciones. Las migraciones reproducibles están en `backend/api/migrations/`; `backend/scripts/schema.sql` contiene el SQL de todas las migraciones y `backend/scripts/seed.sql` inserta los usuarios iniciales y el catálogo de demostración. `python manage.py seed_pos` agrega las cuentas y catálogo de demostración. Para PostgreSQL, configura `DATABASE_URL` y ejecuta los mismos comandos de migración y semilla.
 
 ## Rutas REST principales
 
@@ -148,7 +161,7 @@ Notas del plan gratuito: el backend se suspende tras 15 minutos sin uso y la pri
 
 ### Despliegue manual en otra plataforma
 
-El proyecto ya está preparado para base PostgreSQL mediante `DATABASE_URL`, y el frontend acepta la URL desplegada del API con `VITE_API_URL`. Para publicar, crea una base PostgreSQL, despliega el backend como servicio Python ejecutando `pip install -r requirements.txt` y como comando de inicio `python manage.py migrate && python manage.py seed_pos && gunicorn pos.wsgi:application --bind 0.0.0.0:$PORT`. Despliega `frontend/` como sitio estático usando `pnpm install --frozen-lockfile` y `pnpm build`; publica `dist/` y configura `VITE_API_URL` con la URL HTTPS del backend más `/api`. En backend configura `DEBUG=false`, una clave secreta nueva, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` con el dominio HTTPS del frontend, `DATABASE_URL` y contraseñas iniciales propias.
+El proyecto ya está preparado para base PostgreSQL mediante `DATABASE_URL`, y el frontend acepta la URL desplegada del API con `VITE_API_URL`. Para publicar, crea una base PostgreSQL, despliega el backend como servicio Python ejecutando `pip install -r requirements.txt` y como comando de inicio `python manage.py migrate && python manage.py seed_pos && gunicorn pos.wsgi:application --bind 0.0.0.0:$PORT`. Despliega `frontend/` como sitio estático usando `npm ci` y `npm run build`; publica `dist/` y configura `VITE_API_URL` con la URL HTTPS del backend más `/api`. En backend configura `DEBUG=false`, una clave secreta nueva, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` con el dominio HTTPS del frontend, `DATABASE_URL` y contraseñas iniciales propias.
 
 
 ## Presentación

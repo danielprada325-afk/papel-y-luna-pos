@@ -136,3 +136,21 @@ tbody tr:hover td{background:#faf8ff}
 @media (max-width:760px){.sidebar nav button{color:#efe6ff}.sidebar nav button.active{background:#fff;color:#4a2fa3}}
 @media print{body{background:#fff!important}.receipt-layer{backdrop-filter:none!important;background:#fff!important}}
 .brand-mark{display:flex!important;align-items:center;justify-content:center;gap:0}
+/* Catálogo de venta: ver todos los productos */
+.product-card h3{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.25;min-height:2.5em}
+.catalog-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:14px}
+.view-toggle{display:flex;background:#f3f0fb;border-radius:10px;padding:3px}
+.view-toggle button{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#6b6290}
+.view-toggle button.active{background:#fff;color:var(--purple-dark);box-shadow:0 2px 8px rgba(76,52,150,.15)}
+.catalog-count{margin:10px 2px 0!important;font-size:12px}
+.link-btn{color:var(--purple);font-weight:700;text-decoration:underline;font-size:12px}
+.product-list{display:grid;gap:6px;margin-top:12px}
+.product-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:#fff}
+.product-row:hover{background:#faf8ff}
+.product-row.agotado{background:#fff8f7}
+.pr-main{min-width:0}.pr-main b{display:block;font-size:13px}.pr-main small{font-size:11px}
+.pr-price{font-size:13px;white-space:nowrap}
+.primary.small{padding:7px 10px}
+.product-row .edit-link{margin:0}
+@media (max-width:760px){.product-row{grid-template-columns:1fr auto;}.product-row .pr-price{grid-column:2;grid-row:1}.product-row .primary.small{grid-column:1/-1}.product-row .edit-link{grid-column:1/-1;text-align:center}}
+@media (max-width:760px){.product-row{grid-template-columns:1fr auto auto!important;grid-template-areas:"main main main" "price add edit";gap:6px 8px;padding:8px 10px}.product-row .pr-main{grid-area:main}.product-row .pr-price{grid-area:price!important;grid-column:auto!important;grid-row:auto!important;align-self:center}.product-row .primary.small{grid-area:add!important;grid-column:auto!important;padding:6px 12px}.product-row .edit-link{grid-area:edit!important;grid-column:auto!important}}
